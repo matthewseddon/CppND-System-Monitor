@@ -61,6 +61,8 @@ void NCursesDisplay::DisplayProcesses(std::vector<Process>& processes,
   int const ram_column{26};
   int const time_column{35};
   int const command_column{46};
+  int maxx, maxy;
+  getmaxyx(window, maxx, maxy);
   wattron(window, COLOR_PAIR(2));
   mvwprintw(window, ++row, pid_column, "PID");
   mvwprintw(window, row, user_column, "USER");
@@ -72,17 +74,17 @@ void NCursesDisplay::DisplayProcesses(std::vector<Process>& processes,
   for (int i = 0; i < n; ++i) {
     //You need to take care of the fact that the cpu utilization has already been multiplied by 100.
     // Clear the line
-    mvwprintw(window, ++row, pid_column, (string(window->_maxx-2, ' ').c_str()));
+    mvwprintw(window, ++row, pid_column, (string(maxx-2, ' ').c_str()));
     
     mvwprintw(window, row, pid_column, "%s", to_string(processes[i].Pid()).c_str());
     mvwprintw(window, row, user_column, "%s", processes[i].User().c_str());
     float cpu = processes[i].CpuUtilization() * 100;
     mvwprintw(window, row, cpu_column, "%s", to_string(cpu).substr(0, 4).c_str());
     mvwprintw(window, row, ram_column, "%s", processes[i].Ram().c_str());
-    mvwprintw(window, row, time_column, "%s",
+   mvwprintw(window, row, time_column, "%s",
               Format::ElapsedTime(processes[i].UpTime()).c_str());
     mvwprintw(window, row, command_column, "%s",
-              processes[i].Command().substr(0, window->_maxx - 46).c_str());
+              processes[i].Command().substr(0, maxx - 46).c_str());
   }
 }
 
@@ -94,8 +96,12 @@ void NCursesDisplay::Display(System& system, int n) {
 
   int x_max{getmaxx(stdscr)};
   WINDOW* system_window = newwin(9, x_max - 1, 0, 0);
+  // NOTE system_maxx is not used and will raise a compilation warning.
+  //      The fix here is just included in order to get the build to work.
+  int system_maxx, system_maxy;
+  getmaxyx(system_window, system_maxx, system_maxy);
   WINDOW* process_window =
-      newwin(3 + n, x_max - 1, system_window->_maxy + 1, 0);
+      newwin(3 + n, x_max - 1, system_maxy + 1, 0);
 
   while (1) {
     init_pair(1, COLOR_BLUE, COLOR_BLACK);
